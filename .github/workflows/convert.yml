@@ -1,0 +1,25 @@
+name: AAB to APK
+on: push
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install Bundletool
+        run: wget https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar
+          
+      - name: Convert AAB to APK
+        run: |
+          java -jar bundletool-all-1.15.6.jar build-apks \
+            --bundle=app.aab \
+            --output=output.apks \
+            --mode=universal
+          unzip output.apks -d apk_output
+          
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: universal-apk
+          path: apk_output/universal.apk
