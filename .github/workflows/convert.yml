@@ -8,8 +8,19 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Bundletool
+        run: wget -q https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar -O bundletool.jar
+
+      - name: Generate Debug Keystore
         run: |
-          wget -q https://github.com/google/bundletool/releases/download/1.15.6/bundletool-all-1.15.6.jar -O bundletool.jar
+          keytool -genkey -v \
+            -keystore debug.keystore \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Convert AAB to APK
         run: |
@@ -18,8 +29,14 @@ jobs:
           java -jar bundletool.jar build-apks \
             --bundle="$AAB_FILE" \
             --output=output.apks \
-            --mode=universal
-          unzip output.apks universal.apk -d apk_out
+            --mode=universal \
+            --ks=debug.keystore \
+            --ks-pass=pass:android \
+            --ks-key-alias=androiddebugkey \
+            --key-pass=pass:android
+
+      - name: Extract APK
+        run: unzip output.apks universal.apk -d apk_out
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
